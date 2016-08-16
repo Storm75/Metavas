@@ -71,8 +71,6 @@ def send_file(target, file):
         print ("[-] IOError : {1}".format(e.errno, e.strerror))
 
 
-
-
 def is_int(s):
     try: 
         int(s)
@@ -87,7 +85,7 @@ while (logged == False):
     if (not user): user = input("\n[?] OpenVAS username : ")
     if (not passwd): passwd = getpass.getpass("[?] OpenVAS password : ")
     try:
-        lines = check_output(["omp", "-u", user, '-w', passwd, '-T']).decode("utf-8").splitlines()
+        lines = check_output(["omp", "-u", user, '-w', passwd, '-g']).decode("utf-8").splitlines()
         logged = True
     except subprocess.CalledProcessError as e:
         print ("[-] Could not connect to OpenVAS.\n[!] Please check that services openvas-manager and openvas-scanner are started.")
@@ -95,11 +93,37 @@ while (logged == False):
         
 print ("[+] Succesfully logged in.")
 
+
+print ("\n  [ CONFIG ]\n")
+
+for line in lines:
+    split = str(line).split("  ", 1)
+    configs.append((split[0], split[1]))
+
+
+while (config_choice < 0 or config_choice >= len(configs) ):
+    print ("\n  -- Configuration list --\n")
+    for i,cfg in enumerate(configs):
+        print ("  [" + str(i) + "] " + cfg[1])
+    try:
+        config_choice = int(input("\n[>] Select configuration index : "))
+    except Exception as e:
+        print ("[-] " + str(e))
+        pass
+
+config_id = configs[config_choice][0]
+config_text = configs[config_choice][1]
+
+print ("[+] Using configuration : " + config_text)
+    
+
+
 # Target
 
 targets = []
 print ("\n  [ TARGET ]\n")
 try:
+    lines = check_output(["omp", "-u", user, '-w', passwd, '-T']).decode("utf-8").splitlines()
     for line in lines:
         split = str(line).split("  ", 1)
         targets.append((split[0], split[1]))
@@ -145,29 +169,6 @@ if (new_target or hostname):
     print ("[+] Succesfully created TARGET with ID : " + target_id)
 
 
-print ("\n  [ CONFIG ]\n")
-
-lines = check_output(["omp", "-u", user, '-w', passwd, '-g']).decode("utf-8").splitlines()
-for line in lines:
-    split = str(line).split("  ", 1)
-    configs.append((split[0], split[1]))
-
-
-while (config_choice < 0 or config_choice >= len(configs) ):
-    print ("\n  -- Configuration list --\n")
-    for i,cfg in enumerate(configs):
-        print ("  [" + str(i) + "] " + cfg[1])
-    try:
-        config_choice = int(input("\n[>] Select configuration index : "))
-    except Exception as e:
-        print ("[-] " + str(e))
-        pass
-
-config_id = configs[config_choice][0]
-config_text = configs[config_choice][1]
-
-print ("[+] Using configuration : " + config_text)
-    
 
 print ("\n  [ TASK ]\n")
 status = -1
