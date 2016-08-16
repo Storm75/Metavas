@@ -4,7 +4,7 @@
 
 Usage:
     metavas.py
-    metavas.py -u <user> -w <password> -c <config> -n <hostname> -i <interface>
+    metavas.py -u <user> -w <password> -c <config> -n <hostname> -i <interface> -d <destination>
 
     Options:
         --version     Show version.
@@ -20,6 +20,8 @@ import time
 import requests
 import sys
 from docopt import docopt
+
+TARGET_UPLOAD = "localhost/upload"
 
 def arg_check_int(name, value):
     if value is None:
@@ -48,7 +50,6 @@ if __name__ == '__main__':
     
 
 configs = []
-target_upload     = "localhost/upload"
 create_target_xml = "<create_target><name>{}</name><hosts>{}</hosts></create_target>"
 create_task_xml   = "<create_task><name>{}</name><preferences><preference>\
                      <scanner_name>{}</scanner_name><value>{}</value>\
@@ -69,6 +70,9 @@ def send_file(target, file):
         print ("[-] Could not upload file")
         print ("[-] IOError : {1}".format(e.errno, e.strerror))
 
+
+
+
 def is_int(s):
     try: 
         int(s)
@@ -76,7 +80,7 @@ def is_int(s):
     except ValueError:
         return False
 
-print ("\n  [ LOGIN ]")
+print ("\n  [ LOGIN ]\n")
 # Get config list
 logged = False
 while (logged == False):
@@ -89,12 +93,12 @@ while (logged == False):
         print ("[-] Could not connect to OpenVAS.\n[!] Please check that services openvas-manager and openvas-scanner are started.")
         sys.exit(1)
         
-print ("\n[+] Succesfully logged in.")
+print ("[+] Succesfully logged in.")
 
 # Target
 
 targets = []
-print ("\n  [ TARGET ]")
+print ("\n  [ TARGET ]\n")
 try:
     for line in lines:
         split = str(line).split("  ", 1)
@@ -103,30 +107,31 @@ except Exception as e:
     print ("[-] " + e.message)
     pass
 
-target_is_string = False
+new_target = False
 if (manual_mode): print ("\n  -- Target list --\n")
 for i, target in enumerate(targets):
     if (manual_mode): print ("  [" + str(i) + "] " + target[1])
 
-while (not hostname and (target_choice < 0 or target_choice >= len(targets) or target_is_string)):
+
+
+while (not hostname and not new_target and (target_choice < 0 or target_choice >= len(targets))):
     try:
         target_choice = input("\n[>] Select target index OR press [N]ew  : ")
         target_choice = int(target_choice)
+        target_id = targets[target_choice][0]
     except Exception as e:
         if (type(target_choice) is str and target_choice.upper() == "N"):
-            target_is_string = True
+            new_target = True
             break
         else:
             target_choice = -1
 
-
-if (1 == 2):
-    target_id = targets[target_choice][0]
+if (new_target or hostname):
     status = -1
     while (status != "201"):
         try:
             #target_name = input("\n[>] Enter target label : ")
-            target_name = "Target_"  + time.strftime("%Y-%m-%d-%H-%M%-S") 
+            target_name = "Target_"  + time.strftime("%d-%m-%Y-%Hh-%Mm-%Ss")
             if not hostname: hostname = input("[>] Enter hostname to scan : ")
             lines = subprocess.check_output(["omp", "-u", user, '-w', passwd, '--xml', create_target_xml.format(target_name, hostname)]).decode("utf-8").splitlines()
             root = ElementTree.fromstring(lines[0])
@@ -137,33 +142,34 @@ if (1 == 2):
             print ("[-] " + e.message)
             pass
     target_id = root.get('id')
-    print ("\n[+] Succesfully created TARGET with ID : " + target_id)
-
-else:
-    print ("\n  [ CONFIG ]")
-
-    lines = check_output(["omp", "-u", user, '-w', passwd, '-g']).decode("utf-8").splitlines()
-    for line in lines:
-        split = str(line).split("  ", 1)
-        configs.append((split[0], split[1]))
+    print ("[+] Succesfully created TARGET with ID : " + target_id)
 
 
-    while (config_choice < 0 or config_choice >= len(configs) ):
-        print ("\n  -- Configuration list --\n")
-        for i,cfg in enumerate(configs):
-            print ("  [" + str(i) + "] " + cfg[1])
-        try:
-            config_choice = int(input("\n[>] Select configuration index : "))
-        except Exception as e:
-            print ("[-] " + str(e))
-            pass
+print ("\n  [ CONFIG ]\n")
 
-    config_id = configs[config_choice][0]
-    config_text = configs[config_choice][1]
+lines = check_output(["omp", "-u", user, '-w', passwd, '-g']).decode("utf-8").splitlines()
+for line in lines:
+    split = str(line).split("  ", 1)
+    configs.append((split[0], split[1]))
 
+
+while (config_choice < 0 or config_choice >= len(configs) ):
+    print ("\n  -- Configuration list --\n")
+    for i,cfg in enumerate(configs):
+        print ("  [" + str(i) + "] " + cfg[1])
+    try:
+        config_choice = int(input("\n[>] Select configuration index : "))
+    except Exception as e:
+        print ("[-] " + str(e))
+        pass
+
+config_id = configs[config_choice][0]
+config_text = configs[config_choice][1]
+
+print ("[+] Using configuration : " + config_text)
     
 
-print ("\n  [ TASK ]")
+print ("\n  [ TASK ]\n")
 status = -1
 
 #Create task
@@ -172,7 +178,7 @@ while (status != "201"):
         #task_name = input("\n[>] Enter task label : ")
         task_name = "Task_"  + time.strftime("-%Y%m%d-%H%M%S") 
         scanner_name = "source_iface"
-        if (not interface): interface = input("[>] Enter source interface value : ")
+        if (not interface): interface = input("[>] Enter source interface : ")
         lines = subprocess.check_output(["omp", "-u", user, '-w', passwd, '--xml',\
             create_task_xml.format(task_name, scanner_name, interface, config_id, target_id)]).decode("utf-8").splitlines()
         root = ElementTree.fromstring(lines[0])
@@ -184,20 +190,20 @@ while (status != "201"):
         pass
 
 task_id = root.get('id')
-print ("\n[+] Succesfully created TASK with ID : " + task_id)
+print ("[+] Succesfully created TASK with ID : " + task_id)
 
 
-print ("\n  [ SCAN ]")
+print ("\n  [ SCAN ]\n")
 
 
-go = input("\n[>] Start the scan NOW ? (Y/n)") if (manual_mode) == "True" else "Y"
+go = input("[>] Start the scan NOW ? (Y/n)") if (manual_mode) == "True" else "Y"
 if (go == 'n' or go == 'N'):
     print ("[!] Exiting...")
     sys.exit(0)
 else:
     lines = subprocess.check_output(["omp", "-u", user, '-w', passwd, '-S', task_id]).decode("utf-8").splitlines()
     report_id = lines[0]
-    print ("\n[+] Scan launched, Report ID : " + report_id + "\n")
+    print ("[+] Scan launched, Report ID : " + report_id + "\n")
 
 percent = 0;
 status != "Running"
@@ -219,7 +225,7 @@ while (True):
       bar.finish()
       break
 
-print ("\n[+] Report ready.\n")
+print ("[+] Report ready.\n")
 #//start scan ?
 
 subprocess.check_output(["omp", "-u", user, '-w', passwd, '-R', report_id, '>', 'report_id' + '.report']).decode("utf-8").splitlines()
