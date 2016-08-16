@@ -3,6 +3,7 @@ sudo pip3 install progressbar2
 
 sudo pip3 install docopt
 
+git clone https://github.com/Storm75/Metavas.git
 
 #Usage
 
