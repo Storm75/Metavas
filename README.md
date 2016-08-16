@@ -9,7 +9,7 @@ Usage:
 
      ./metavas.py
 
-  OR ./metavas.py -u \<user\> -w \<password\> -c \<config\> -n \<hostname\> -i \<interface\>
+     ./metavas.py -u [user] -w [password] -c [config] -n [hostname] -i [interface]
 
 Example:
 
