@@ -1,5 +1,6 @@
 #Install
-sudo pip3 install progressbar
+sudo pip3 install progressbar2
+
 sudo pip3 install docopt
 
 
