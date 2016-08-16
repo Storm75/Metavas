@@ -6,11 +6,17 @@ sudo pip3 install docopt
 #Usage
 
 Usage:
+
      ./metavas.py
-  OR ./metavas.py -u <user> -w <password> -c <config> -n <hostname> -i <interface>
+
+  OR ./metavas.py -u \<user\> -w \<password\> -c \<config\> -n \<hostname\> -i \<interface\>
 
 Example:
+
     metavas.py -u admin -w admin -c 0 -n 127.0.0.1 -i eth0
+
+
+
 
 Please note that the "-c" config argument takes the configuration index input, not the name.
 You can view these configuration indexes by starting the script without any argument.
