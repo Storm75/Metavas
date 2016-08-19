@@ -207,7 +207,7 @@ else:
     print ("[+] Scan launched, Report ID : " + report_id + "\n")
 
 percent = 0;
-status != "Running"
+status = "Running"
 
 bar = progressbar.ProgressBar(redirect_stdout=True)
 bar.update(0)
