@@ -4,7 +4,7 @@
 
 Usage:
     metavas.py
-    metavas.py -u <user> -w <password> -c <config> -n <hostname> -i <interface> -d <destination>
+    metavas.py -u <user> -w <password> -c <config> -n <hostname> -i <interface>
 
     Options:
         --version     Show version.
@@ -37,7 +37,7 @@ def arg_check_int(name, value):
 if __name__ == '__main__':
 
     manual_mode = False
-    arguments = docopt(__doc__, version='MetaVAS 1.0alpha')
+    arguments = docopt(__doc__, version='MetaVAS 1.1alpha')
     user = "" if arguments['<user>'] is None else arguments['<user>']
     if (not user): manual_mode = True
     passwd = "" if arguments['<password>'] is None else arguments['<password>']
@@ -238,4 +238,4 @@ report_file = open(report_id + ".xml", "w")
 report_file.write(report)
 report_file.close()
 
-send_file(target_upload, filename)
+send_file(TARGET_UPLOAD, filename)
